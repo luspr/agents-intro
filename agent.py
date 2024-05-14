@@ -74,7 +74,7 @@ def get_last_n_messages(thread_id, n=1, start=0, as_string=True):
 
 
 
-class Agent:
+class GithubAgent:
 
     def __init__(self):
         self.thread = thread = client.beta.threads.create()
@@ -138,4 +138,4 @@ class Agent:
 
 if __name__ == '__main__':
     agent = Agent()
-    print(agent.execute('Give me repos about hackbay'))
+    print(agent.execute('Give me issues for ghp-dev/hackbay01'))
