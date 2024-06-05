@@ -8,9 +8,9 @@ from slack_sdk import WebClient
 # from slack_data import SlackEvent, create_slack_event
 from slack import send_to_channel, create_slack_event
 
-from agent import GithubAgent
+from agent import SoftwareEngineeringManagerAgent
 
-github_agent = GithubAgent()
+github_agent = SoftwareEngineeringManagerAgent()
 
 app = FastAPI()
 

@@ -48,8 +48,7 @@ def get_user_id_by_email(email):
 
 def get_all_users() -> Generator[dict, None, None]:
     """
-    Gets all users from Slack, returning their user nuclino_data as dictionaries (as per Slack's API)
-
+    Gets all users from Slack
     """
     client = WebClient(token=SLACK_TOKEN)
     try:
@@ -66,9 +65,23 @@ def get_all_users() -> Generator[dict, None, None]:
 
 
 def send_to_channel(channel_id: str, message: str):
+    message = message[:3000]
     client = WebClient(token=SLACK_TOKEN)
     try:
-        response = client.chat_postMessage(channel=channel_id, text=message, as_user=True)
+        response = client.chat_postMessage(
+            channel=channel_id,
+            text=message,
+            blocks=[
+                {
+                    "type": "section",
+                    "text": {
+                        "type": "mrkdwn",
+                        "text": message
+                    }
+                }
+            ],
+            as_user=True
+        )
         print("Message sent to channel: ", response["message"]["text"])
     except SlackApiError as e:
         print(f"Error: {e}")

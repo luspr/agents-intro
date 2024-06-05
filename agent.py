@@ -5,7 +5,7 @@ from openai import OpenAI
 from typing_extensions import override
 from openai import AssistantEventHandler
 
-import github
+import agent_tools
 
 
 from dotenv import load_dotenv, find_dotenv
@@ -52,6 +52,23 @@ tools = [
             },
         }
     },
+    {
+        "type": "function",
+        "function": {
+            "name": "query_azure_devops",
+            "description": "Query Azure Devops for work items using a WIQL (Work Item Query Language). Use this to fulfill a user request about work items that are managed in Azure Devops.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "wiql_query": {
+                        "type": "string",
+                        "description": "The WIQL query to be performed.",
+                    }
+                },
+                "required": ["wiql_query"]
+            },
+        }
+    },
 ]
 
 
@@ -74,15 +91,29 @@ def get_last_n_messages(thread_id, n=1, start=0, as_string=True):
 
 
 
-class GithubAgent:
+class SoftwareEngineeringManagerAgent:
 
     def __init__(self):
         self.thread = thread = client.beta.threads.create()
         self.assistant = client.beta.assistants.create(
-            name="Github assistant",
-            instructions="You help people navigate github in natural language. You have two tools: find issues in a certain repo, find a repo by query (substring)",
+            name="Software Development Assistant",
+            instructions="""You are a software development and project management assistant. You help people navigate github repositories in natural language. 
+You also assist with project management using Azure DevOps. If a user has a project management question, i.e., requests information that is associated with work items stored and managed in Azure Devops, you formulate and execute a Work Item Query Language (WIQL) query. 
+
+## Response format
+We send responses via slack so print all responses nicely format as slack mrkdwn such that it can be rendered by slack.
+Always include a link to the repo, the issue or the azure devops work item, if possible.
+In slack mrkdwn, links are defined like this: <http://www.example.com|This message *is* a link>
+Don't print the ADO ID
+
+## Tools
+You have three tools: 
+1. find issues in a certain Github repo.
+2. find a Github repo by query (substring)
+3. query Azure DevOps using WIQL. If asked for a team, use the area parameter!
+""",
             tools=tools,
-            model="gpt-4-turbo", # Try out other models
+            model="gpt-4o", # Try out other models
         )
 
 
@@ -113,7 +144,7 @@ class GithubAgent:
                 for tool_call in run.required_action.submit_tool_outputs.tool_calls:
                     func_name = tool_call.function.name
                     kwargs = json.loads(tool_call.function.arguments)
-                    func_to_call = getattr(github, func_name)
+                    func_to_call = getattr(agent_tools, func_name)
                     print("Calling tool", func_name, " with ", kwargs)
                     output = str(func_to_call(**kwargs))
                     print(output)
